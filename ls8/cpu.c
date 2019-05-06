@@ -1,4 +1,6 @@
 #include "cpu.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 #define DATA_LEN 6
 
@@ -40,21 +42,68 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
   }
 }
 
+/** 
+  * RAM
+  */
+
+int cpu_ram_read(struct cpu *cpu, int index) {
+  // using the pc, returns the value of the next byte in ram
+  return cpu->ram[cpu->pc + index];
+}
+
+int cpu_ram_write(struct cpu *cpu) {
+  // how do we know which block of ram to write to?
+  return 0;
+}
 /**
  * Run the CPU
  */
 void cpu_run(struct cpu *cpu)
 {
   int running = 1; // True until we get a HLT instruction
+  int ir, instructions, op_a, op_b;
 
   while (running) {
     // TODO
     // 1. Get the value of the current instruction (in address PC).
+    /* getchar(); */
+    ir = cpu_ram_read(cpu, 0);
+    printf("ir is %d\n", ir);
     // 2. Figure out how many operands this next instruction requires
     // 3. Get the appropriate value(s) of the operands following this instruction
+    if (ir >= 128) {
+      instructions = 2;
+      op_a = cpu_ram_read(cpu, 1);
+      op_b = cpu_ram_read(cpu, 2);
+    } else if (ir >= 64) {
+      instructions = 1;
+      op_a = cpu_ram_read(cpu, 1);
+    }
+    /* printf("op_a: %d\nop_b: %d\n", op_a, op_b); */
     // 4. switch() over it to decide on a course of action.
     // 5. Do whatever the instruction should do according to the spec.
+    switch(ir) {
+      case HLT:
+        printf("HLT\n");
+        running = 0;
+        break;
+      case LDI:
+        printf("LDI\n");
+        printf("register is %d\n", op_a);
+        printf("value is %d\n", op_b);
+        cpu->reg[op_a] = op_b;
+        printf("confirming: %d\n", cpu->reg[op_a]);
+        /* running = 0; */
+        break;
+      case PRN:
+        printf("PRN\n");
+        printf("%d\n", cpu->reg[op_a]);
+        break;
+      default:
+        printf("default instance\n");
+    }
     // 6. Move the PC to the next instruction.
+    cpu->pc += 1 + instructions;
   }
 }
 
@@ -64,4 +113,7 @@ void cpu_run(struct cpu *cpu)
 void cpu_init(struct cpu *cpu)
 {
   // TODO: Initialize the PC and other special registers
+  cpu->pc = 0;
+  cpu->reg = calloc(sizeof(cpu->reg), 8);
+  cpu->ram = calloc(sizeof(cpu->ram), 256);
 }
