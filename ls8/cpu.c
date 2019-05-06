@@ -118,6 +118,10 @@ void cpu_run(struct cpu *cpu)
         printf("confirming: %d\n", cpu->reg[op_a]);
         /* running = 0; */
         break;
+      case MUL: // come back and call alu function later
+        printf("MUL\n");
+        cpu->reg[op_a] = cpu->reg[op_a] * cpu->reg[op_b];
+        break;
       case PRN:
         printf("PRN\n");
         printf("%d\n", cpu->reg[op_a]);
