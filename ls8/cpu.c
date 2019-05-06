@@ -7,8 +7,30 @@
 /**
  * Load the binary bytes from a .ls8 source file into a RAM array
  */
-void cpu_load(struct cpu *cpu)
+void cpu_load(struct cpu *cpu, char *file)
 {
+  FILE *fp = fopen(file, "r");
+  char line[128];
+  int index = 0;
+  char c;
+  int reading = 1;
+  int address = 0;
+  while ((c = fgetc(fp)) != EOF) {
+    if (c == '#') {
+      reading = 0;
+    }
+    if (c == '\n') {
+      printf("adding %s to memory\n", line);
+      cpu->ram[address++] = strtoul(line, NULL, 2);
+      line[0] = '\0';
+      index = 0;
+      reading = 1;
+    } else if (reading) {
+      line[index++] = c;
+    } 
+  }
+  fclose(fp);
+
   char data[DATA_LEN] = {
     // From print8.ls8
     0b10000010, // LDI R0,8
@@ -19,11 +41,12 @@ void cpu_load(struct cpu *cpu)
     0b00000001  // HLT
   };
 
-  int address = 0;
 
+  /*
   for (int i = 0; i < DATA_LEN; i++) {
     cpu->ram[address++] = data[i];
   }
+  */
 
   // TODO: Replace this with something less hard-coded
 }
@@ -68,7 +91,7 @@ void cpu_run(struct cpu *cpu)
     // 1. Get the value of the current instruction (in address PC).
     /* getchar(); */
     ir = cpu_ram_read(cpu, 0);
-    printf("ir is %d\n", ir);
+    /* printf("ir is %d\n", ir); */
     // 2. Figure out how many operands this next instruction requires
     // 3. Get the appropriate value(s) of the operands following this instruction
     if (ir >= 128) {
@@ -101,6 +124,7 @@ void cpu_run(struct cpu *cpu)
         break;
       default:
         printf("default instance\n");
+        exit(1);
     }
     // 6. Move the PC to the next instruction.
     cpu->pc += 1 + instructions;
