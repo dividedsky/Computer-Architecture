@@ -83,17 +83,23 @@ int cpu_ram_write(struct cpu *cpu) {
 /*
 typedef void (*Handler)(struct cpu *cpu, int op_a, int op_b);
 Handler jump_table[255] = {0}; //(struct cpu *cpu, int op_a, int op_b);
-void handle_LDI(struct cpu *cpu, int op_a, int op_b)
-{
-        printf("LDI\n");
-        printf("register is %d\n", op_a);
-        printf("value is %d\n", op_b);
-        cpu->reg[op_a] = op_b;
-        printf("confirming: %d\n", cpu->reg[op_a]);
-}
 
 branch_tbl[LDI] = handle_LDI;
 */
+void handle_LDI(struct cpu *cpu, int op_a, int op_b)
+{
+    printf("LDI\n");
+    printf("register is %d\n", op_a);
+    printf("value is %d\n", op_b);
+    cpu->reg[op_a] = op_b;
+    printf("confirming: %d\n", cpu->reg[op_a]);
+}
+
+void handle_MUL(struct cpu *cpu, int op_a, int op_b)
+{
+    printf("MUL\n");
+    cpu->reg[op_a] = cpu->reg[op_a] * cpu->reg[op_b];
+}
 /**
  * Run the CPU
  */
@@ -104,11 +110,8 @@ void cpu_run(struct cpu *cpu)
   int ir, instructions, op_a, op_b;
 
   while (running) {
-    // TODO
     // 1. Get the value of the current instruction (in address PC).
-    /* getchar(); */
     ir = cpu_ram_read(cpu, 0);
-    /* printf("ir is %d\n", ir); */
     // 2. Figure out how many operands this next instruction requires
     // 3. Get the appropriate value(s) of the operands following this instruction
     if (ir >= 128) {
@@ -119,7 +122,6 @@ void cpu_run(struct cpu *cpu)
       instructions = 1;
       op_a = cpu_ram_read(cpu, 1);
     }
-    /* printf("op_a: %d\nop_b: %d\n", op_a, op_b); */
     // 4. switch() over it to decide on a course of action.
     // 5. Do whatever the instruction should do according to the spec.
     switch(ir) {
@@ -128,17 +130,10 @@ void cpu_run(struct cpu *cpu)
         running = 0;
         break;
       case LDI:
-        /*
-        printf("LDI\n");
-        printf("register is %d\n", op_a);
-        printf("value is %d\n", op_b);
-        cpu->reg[op_a] = op_b;
-        printf("confirming: %d\n", cpu->reg[op_a]);
-        */
+        handle_LDI(cpu, op_a, op_b);
         break;
       case MUL: // come back and call alu function later
-        printf("MUL\n");
-        cpu->reg[op_a] = cpu->reg[op_a] * cpu->reg[op_b];
+        handle_MUL(cpu, op_a, op_b);
         break;
       case PRN:
         printf("PRN\n");
