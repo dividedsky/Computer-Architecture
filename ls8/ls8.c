@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "cpu.h"
 
 /**
@@ -16,5 +17,7 @@ int main(int argc, char *argv[])
   cpu_load(&cpu, argv[1]);
   cpu_run(&cpu);
 
+  free(cpu.reg);
+  free(cpu.ram);
   return 0;
 }

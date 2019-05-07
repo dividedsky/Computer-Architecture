@@ -20,7 +20,7 @@ void cpu_load(struct cpu *cpu, char *file)
       reading = 0;
     }
     if (c == '\n') {
-      printf("adding %s to memory\n", line);
+      /* printf("adding %s to memory\n", line); */
       cpu->ram[address++] = strtoul(line, NULL, 2);
       line[0] = '\0';
       index = 0;
@@ -128,7 +128,7 @@ void cpu_run(struct cpu *cpu)
         break;
       default:
         printf("default instance\n");
-        exit(1);
+        shutdown(cpu, 1);
     }
     // 6. Move the PC to the next instruction.
     cpu->pc += 1 + instructions;
@@ -143,5 +143,13 @@ void cpu_init(struct cpu *cpu)
   // TODO: Initialize the PC and other special registers
   cpu->pc = 0;
   cpu->reg = calloc(sizeof(cpu->reg), 8);
+  cpu->reg[7] = 0xF4;
   cpu->ram = calloc(sizeof(cpu->ram), 256);
+}
+
+void shutdown(struct cpu *cpu, int exit_status) {
+  free(cpu->reg);
+  free(cpu->ram);
+  free(cpu);
+  exit(exit_status);
 }
