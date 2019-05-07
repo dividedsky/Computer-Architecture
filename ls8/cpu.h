@@ -35,5 +35,6 @@ extern void cpu_load(struct cpu *cpu, char *file);
 extern void cpu_init(struct cpu *cpu);
 extern void cpu_run(struct cpu *cpu);
 extern void shutdown(struct cpu *cpu, int status);
+extern void handle_LDI(struct cpu *cpu, int op_a, int op_b);
 
 #endif

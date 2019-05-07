@@ -78,11 +78,28 @@ int cpu_ram_write(struct cpu *cpu) {
   // how do we know which block of ram to write to?
   return 0;
 }
+
+/* branch table with opcode functions */
+/*
+typedef void (*Handler)(struct cpu *cpu, int op_a, int op_b);
+Handler jump_table[255] = {0}; //(struct cpu *cpu, int op_a, int op_b);
+void handle_LDI(struct cpu *cpu, int op_a, int op_b)
+{
+        printf("LDI\n");
+        printf("register is %d\n", op_a);
+        printf("value is %d\n", op_b);
+        cpu->reg[op_a] = op_b;
+        printf("confirming: %d\n", cpu->reg[op_a]);
+}
+
+branch_tbl[LDI] = handle_LDI;
+*/
 /**
  * Run the CPU
  */
 void cpu_run(struct cpu *cpu)
 {
+  printf("LDIIIIII: %d\n", LDI);
   int running = 1; // True until we get a HLT instruction
   int ir, instructions, op_a, op_b;
 
@@ -111,12 +128,13 @@ void cpu_run(struct cpu *cpu)
         running = 0;
         break;
       case LDI:
+        /*
         printf("LDI\n");
         printf("register is %d\n", op_a);
         printf("value is %d\n", op_b);
         cpu->reg[op_a] = op_b;
         printf("confirming: %d\n", cpu->reg[op_a]);
-        /* running = 0; */
+        */
         break;
       case MUL: // come back and call alu function later
         printf("MUL\n");
