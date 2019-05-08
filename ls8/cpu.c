@@ -10,23 +10,29 @@
 void cpu_load(struct cpu *cpu, char *file)
 {
   FILE *fp = fopen(file, "r");
+  if (fp == NULL) {
+    fprintf(stderr, "file not found\n");
+    exit(1);
+  }
   char line[128];
   int index = 0;
   char c;
   int reading = 1;
   int address = 0;
   while ((c = fgetc(fp)) != EOF) {
+    // read one char at a time until we get to EOF
     if (c == '#') {
+      // if we've reached a comment, stop reading into line
       reading = 0;
     }
     if (c == '\n') {
-      /* printf("adding %s to memory\n", line); */
-      /* cpu->ram[address++] = strtoul(line, NULL, 2); */
+      // if we've reached a new line, add line to memory and reset
       cpu_ram_write(cpu, address++, strtoul(line, NULL, 2));
       line[0] = '\0';
       index = 0;
       reading = 1;
     } else if (reading) {
+      // otherwise, add the character to line
       line[index++] = c;
     } 
   }
