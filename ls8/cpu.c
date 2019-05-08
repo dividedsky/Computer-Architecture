@@ -31,25 +31,6 @@ void cpu_load(struct cpu *cpu, char *file)
     } 
   }
   fclose(fp);
-
-  char data[DATA_LEN] = {
-    // From print8.ls8
-    0b10000010, // LDI R0,8
-    0b00000000,
-    0b00001000,
-    0b01000111, // PRN R0
-    0b00000000,
-    0b00000001  // HLT
-  };
-
-
-  /*
-  for (int i = 0; i < DATA_LEN; i++) {
-    cpu->ram[address++] = data[i];
-  }
-  */
-
-  // TODO: Replace this with something less hard-coded
 }
 
 /**
@@ -90,16 +71,16 @@ branch_tbl[LDI] = handle_LDI;
 */
 void handle_LDI(struct cpu *cpu, int op_a, int op_b)
 {
-    printf("LDI\n");
-    printf("register is %d\n", op_a);
-    printf("value is %d\n", op_b);
+    /* printf("LDI\n"); */
+    /* printf("register is %d\n", op_a); */
+    /* printf("value is %d\n", op_b); */
     cpu->reg[op_a] = op_b;
-    printf("confirming: %d\n", cpu->reg[op_a]);
+    /* printf("confirming: %d\n", cpu->reg[op_a]); */
 }
 
 void handle_MUL(struct cpu *cpu, int op_a, int op_b)
 {
-    printf("MUL\n");
+    /* printf("MUL\n"); */
     cpu->reg[op_a] = cpu->reg[op_a] * cpu->reg[op_b];
 }
 /**
@@ -107,7 +88,6 @@ void handle_MUL(struct cpu *cpu, int op_a, int op_b)
  */
 void cpu_run(struct cpu *cpu)
 {
-  printf("LDIIIIII: %d\n", LDI);
   int running = 1; // True until we get a HLT instruction
   int ir, instructions, op_a, op_b;
 
@@ -115,20 +95,22 @@ void cpu_run(struct cpu *cpu)
     // 1. Get the value of the current instruction (in address PC).
     ir = cpu_ram_read(cpu, 0);
     // 2. Figure out how many operands this next instruction requires
+    int ops_count = ir >> 6; // check the first two bits for ops count
+    /* printf("ic is %d\n", ic); */
     // 3. Get the appropriate value(s) of the operands following this instruction
-    if (ir >= 128) {
-      instructions = 2;
+    if (ops_count == 2) {
+      /* instructions = 2; */
       op_a = cpu_ram_read(cpu, 1);
       op_b = cpu_ram_read(cpu, 2);
-    } else if (ir >= 64) {
-      instructions = 1;
+    } else if (ops_count == 1) {
+      /* instructions = 1; */
       op_a = cpu_ram_read(cpu, 1);
     }
     // 4. switch() over it to decide on a course of action.
     // 5. Do whatever the instruction should do according to the spec.
     switch(ir) {
       case HLT:
-        printf("HLT\n");
+        /* printf("HLT\n"); */
         running = 0;
         break;
       case LDI:
@@ -138,15 +120,25 @@ void cpu_run(struct cpu *cpu)
         handle_MUL(cpu, op_a, op_b);
         break;
       case PRN:
-        printf("PRN\n");
+        /* printf("PRN\n"); */
         printf("%d\n", cpu->reg[op_a]);
         break;
+      case PUSH:
+        /* printf("PUSH\n"); */
+        cpu->sp--;
+        *cpu->sp = cpu->reg[op_a];
+        break;
+      case POP:
+        /* printf("POP\n"); */
+        cpu->reg[op_a] = *cpu->sp;
+        cpu->sp++;
+        break;
       default:
-        printf("default instance\n");
+        /* printf("default instance\n"); */
         shutdown(cpu, 1);
     }
     // 6. Move the PC to the next instruction.
-    cpu->pc += 1 + instructions;
+    cpu->pc += 1 + ops_count;
   }
 }
 
@@ -158,8 +150,9 @@ void cpu_init(struct cpu *cpu)
   // TODO: Initialize the PC and other special registers
   cpu->pc = 0;
   cpu->reg = calloc(sizeof(cpu->reg), 8);
-  cpu->reg[7] = 0xF4;
+  cpu->reg[7] = 0xf4;
   cpu->ram = calloc(sizeof(cpu->ram), 256);
+  cpu->sp = &cpu->ram[0xf4];
 }
 
 void shutdown(struct cpu *cpu, int exit_status) {

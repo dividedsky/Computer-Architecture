@@ -10,6 +10,7 @@ struct cpu {
 
   // ram (array)
   unsigned char *ram;
+  unsigned char *sp;
 };
 
 // ALU operations
@@ -27,6 +28,8 @@ enum alu_op {
 #define HLT  0b00000001
 #define PRN  0b01000111
 #define MUL  0b10100010
+#define PUSH 0b01000101 
+#define POP  0b01000110 
 // TODO: more instructions here. These can be used in cpu_run().
 
 // Function declarations
@@ -36,5 +39,7 @@ extern void cpu_init(struct cpu *cpu);
 extern void cpu_run(struct cpu *cpu);
 extern void shutdown(struct cpu *cpu, int status);
 extern void handle_LDI(struct cpu *cpu, int op_a, int op_b);
+extern int cpu_ram_read(struct cpu *cpu, int);
+extern int cpu_ram_write(struct cpu *cpu, int, char *);
 
 #endif
