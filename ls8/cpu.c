@@ -27,7 +27,8 @@ void cpu_load(struct cpu *cpu, char *file)
     }
     if (c == '\n') {
       // if we've reached a new line, add line to memory and reset
-      cpu_ram_write(cpu, address++, strtoul(line, NULL, 2));
+      if (line[0] != '\0')
+        cpu_ram_write(cpu, address++, strtoul(line, NULL, 2));
       line[0] = '\0';
       index = 0;
       reading = 1;
@@ -95,7 +96,7 @@ void handle_MUL(struct cpu *cpu, int op_a, int op_b)
 void cpu_run(struct cpu *cpu)
 {
   int running = 1; // True until we get a HLT instruction
-  int ir, ops_count, op_a, op_b;
+  int ir, ops_count, op_a, op_b, jmp_flag;
 
   while (running) {
     // 1. Get the value of the current instruction (in address PC).
@@ -114,16 +115,38 @@ void cpu_run(struct cpu *cpu)
     }
     // 4. switch() over it to decide on a course of action.
     // 5. Do whatever the instruction should do according to the spec.
+    jmp_flag = 0;
+    /* printf("address %d\n", cpu->pc); */
     switch(ir) {
+      case CALL:
+        jmp_flag = 1;
+        /* printf("CALL\n"); */
+        cpu->sp--;
+        *cpu->sp = cpu->pc + 2;
+        /* printf("sp is now set to %d\n", *cpu->sp); */
+        cpu->pc = cpu->reg[op_a];
+        /* printf("pc is now set to %d\n", cpu->pc); */
+        break;
+      case RET:
+        /* printf("RET\n"); */
+        jmp_flag = 1;
+        cpu->pc = *cpu->sp;
+        /* cpu->pc++; */
+        continue;
       case HLT:
         /* printf("HLT\n"); */
         running = 0;
         break;
       case LDI:
+        /* printf("LDI\n"); */
         handle_LDI(cpu, op_a, op_b);
         break;
       case MUL: // come back and call alu function later
         handle_MUL(cpu, op_a, op_b);
+        break;
+      case ADD:
+        /* printf("ADD\n"); */
+        cpu->reg[op_a] = cpu->reg[op_a] + cpu->reg[op_b];
         break;
       case PRN:
         /* printf("PRN\n"); */
@@ -144,7 +167,10 @@ void cpu_run(struct cpu *cpu)
         shutdown(cpu, 1);
     }
     // 6. Move the PC to the next instruction.
-    cpu->pc += 1 + ops_count;
+    if (!jmp_flag) {
+      cpu->pc += 1 + ops_count;
+      /* printf("no jump, pc is now %d\n", cpu->pc); */
+    }
   }
 }
 
@@ -153,12 +179,14 @@ void cpu_run(struct cpu *cpu)
  */
 void cpu_init(struct cpu *cpu)
 {
-  // TODO: Initialize the PC and other special registers
   cpu->pc = 0;
   cpu->reg = calloc(sizeof(cpu->reg), 8);
-  cpu->reg[7] = 0xf4;
+  // cpu->reg[7] = 0xf4; // this seems wrong...
   cpu->ram = calloc(sizeof(cpu->ram), 256);
   cpu->sp = &cpu->ram[0xf4];
+  /* i know the above is wrong, and the pointer should be in reg[7], but
+     is there anyway to get around that? cpu->mem[cpu->reg[SP]] just feels so messy.
+     */
 }
 
 void shutdown(struct cpu *cpu, int exit_status) {
