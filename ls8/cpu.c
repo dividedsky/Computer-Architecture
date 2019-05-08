@@ -21,7 +21,8 @@ void cpu_load(struct cpu *cpu, char *file)
     }
     if (c == '\n') {
       /* printf("adding %s to memory\n", line); */
-      cpu->ram[address++] = strtoul(line, NULL, 2);
+      /* cpu->ram[address++] = strtoul(line, NULL, 2); */
+      cpu_ram_write(cpu, address++, strtoul(line, NULL, 2));
       line[0] = '\0';
       index = 0;
       reading = 1;
@@ -74,8 +75,9 @@ int cpu_ram_read(struct cpu *cpu, int index) {
   return cpu->ram[cpu->pc + index];
 }
 
-int cpu_ram_write(struct cpu *cpu) {
+int cpu_ram_write(struct cpu *cpu, int index, char *input) {
   // how do we know which block of ram to write to?
+  cpu->ram[index] = input;
   return 0;
 }
 
