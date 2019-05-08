@@ -89,13 +89,13 @@ void handle_MUL(struct cpu *cpu, int op_a, int op_b)
 void cpu_run(struct cpu *cpu)
 {
   int running = 1; // True until we get a HLT instruction
-  int ir, instructions, op_a, op_b;
+  int ir, ops_count, op_a, op_b;
 
   while (running) {
     // 1. Get the value of the current instruction (in address PC).
     ir = cpu_ram_read(cpu, 0);
     // 2. Figure out how many operands this next instruction requires
-    int ops_count = ir >> 6; // check the first two bits for ops count
+    ops_count = (ir >> 6) & 0b11; // check the first two bits for ops count
     /* printf("ic is %d\n", ic); */
     // 3. Get the appropriate value(s) of the operands following this instruction
     if (ops_count == 2) {
