@@ -11,6 +11,9 @@ struct cpu {
   // ram (array)
   unsigned char *ram;
   unsigned char *sp;
+
+  // flags
+  unsigned char *fl;
 };
 
 // ALU operations
@@ -34,6 +37,7 @@ enum alu_op {
 #define CALL 0b01010000
 #define RET  0b00010001
 #define ADD  0b10100000
+#define CMP  0b10100111
 // TODO: more instructions here. These can be used in cpu_run().
 
 // Function declarations

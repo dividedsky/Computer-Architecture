@@ -53,6 +53,26 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
     case ALU_ADD:
       cpu->reg[regA] = cpu->reg[regA] + cpu->reg[regB];
       break;
+    case ALU_CMP:
+      printf("CMP\n");
+      // and mask to reset flag bits
+      *cpu->fl = *cpu->fl & 0b00000000;
+      if (cpu->reg[regA] == cpu->reg[regB]) {
+        printf("equal\n");
+        // or maks to set selected bit on
+        *cpu->fl = *cpu->fl | 0b00000001;
+        printf("fl set to %d\n", *cpu->fl);
+      } else if (cpu->reg[regA] > cpu->reg[regB]) {
+        *cpu->fl = *cpu->fl | 0b00000100;
+        printf("greater than\n");
+        printf("fl set to %d\n", *cpu->fl);
+      } else {
+        *cpu->fl = *cpu->fl | 0b00000010;
+        printf("less than\n");
+        printf("fl set to %d\n", *cpu->fl);
+      }
+      break;
+      
 
     // TODO: implement more ALU ops
   }
@@ -154,6 +174,9 @@ void cpu_run(struct cpu *cpu)
         /* cpu->reg[op_a] = cpu->reg[op_a] + cpu->reg[op_b]; */
         alu(cpu, ALU_ADD, op_a, op_b);
         break;
+      case CMP:
+        alu(cpu, ALU_CMP, op_a, op_b);
+        break;
       case PRN:
         /* printf("PRN\n"); */
         printf("%d\n", cpu->reg[op_a]);
@@ -169,7 +192,7 @@ void cpu_run(struct cpu *cpu)
         cpu->sp++;
         break;
       default:
-        /* printf("default instance\n"); */
+        printf("default instance\n");
         shutdown(cpu, 1);
     }
     // 6. Move the PC to the next instruction.
@@ -190,6 +213,7 @@ void cpu_init(struct cpu *cpu)
   // cpu->reg[7] = 0xf4; // this seems wrong...
   cpu->ram = calloc(sizeof(cpu->ram), 256);
   cpu->sp = &cpu->ram[0xf4];
+  cpu->fl = calloc(1, sizeof(char));
   /* i know the above is wrong, and the pointer should be in reg[7], but
      is there anyway to get around that? cpu->mem[cpu->reg[SP]] just feels so messy.
      */
