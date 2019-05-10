@@ -114,6 +114,7 @@ void handle_MUL(struct cpu *cpu, int op_a, int op_b)
     /* printf("MUL\n"); */
     cpu->reg[op_a] = cpu->reg[op_a] * cpu->reg[op_b];
 }
+
 /**
  * Run the CPU
  */
@@ -176,6 +177,27 @@ void cpu_run(struct cpu *cpu)
         break;
       case CMP:
         alu(cpu, ALU_CMP, op_a, op_b);
+        break;
+      case JMP:
+        printf("JMP\n");
+        jmp_flag = 1;
+        cpu->pc = cpu->reg[op_a];
+        break;
+      case JEQ:
+        printf("JEQ\n");
+        if (*cpu->fl & 0b00000001) {
+          printf("jeq jmp\n");
+          jmp_flag = 1;
+          cpu->pc = cpu->reg[op_a];
+        }
+        break;
+      case JNE:
+        printf("JNE\n");
+        if (!(*cpu->fl & 0b00000001)) {
+          printf("jne jmp\n");
+          jmp_flag = 1;
+          cpu->pc = cpu->reg[op_a];
+        }
         break;
       case PRN:
         /* printf("PRN\n"); */
