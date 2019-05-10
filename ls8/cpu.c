@@ -72,6 +72,28 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
         printf("fl set to %d\n", *cpu->fl);
       }
       break;
+    case ALU_AND:
+      cpu->reg[regA] = cpu->reg[regA] & cpu->reg[regB];
+      break;
+    case ALU_OR:
+      cpu->reg[regA] = cpu->reg[regA] | cpu->reg[regB];
+      break;
+    case ALU_XOR:
+      cpu->reg[regA] = cpu->reg[regA] ^ cpu->reg[regB];
+      break;
+    case ALU_NOT:
+      cpu->reg[regA] = ~cpu->reg[regA];
+      break;
+    case ALU_SHL:
+      cpu->reg[regA] = cpu->reg[regA] << cpu->reg[regB];
+      break;
+    case ALU_SHR:
+      cpu->reg[regA] = cpu->reg[regA] >> cpu->reg[regB];
+      break;
+    case ALU_MOD:
+      cpu->reg[regA] = cpu->reg[regA] % cpu->reg[regB];
+      break;
+
       
 
     // TODO: implement more ALU ops
@@ -198,6 +220,24 @@ void cpu_run(struct cpu *cpu)
           jmp_flag = 1;
           cpu->pc = cpu->reg[op_a];
         }
+        break;
+      case AND:
+        alu(cpu, ALU_AND, op_a, op_b);
+        break;
+      case OR:
+        alu(cpu, ALU_OR, op_a, op_b);
+        break;
+      case XOR:
+        alu(cpu, ALU_XOR, op_a, op_b);
+        break;
+      case NOT:
+        alu(cpu, ALU_NOT, op_a, op_b);
+        break;
+      case SHL:
+        alu(cpu, ALU_SHL, op_a, op_b);
+        break;
+      case SHR:
+        alu(cpu, ALU_SHR, op_a, op_b);
         break;
       case PRN:
         /* printf("PRN\n"); */
