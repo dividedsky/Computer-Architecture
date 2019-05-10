@@ -197,6 +197,9 @@ void cpu_run(struct cpu *cpu)
         /* cpu->reg[op_a] = cpu->reg[op_a] + cpu->reg[op_b]; */
         alu(cpu, ALU_ADD, op_a, op_b);
         break;
+      case ADDI:
+        cpu->reg[op_a] += op_b;
+        break;
       case CMP:
         alu(cpu, ALU_CMP, op_a, op_b);
         break;
