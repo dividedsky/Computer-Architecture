@@ -48,9 +48,44 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
   switch (op) {
     case ALU_MUL:
       // TODO
+      cpu->reg[regA] = cpu->reg[regA] * cpu->reg[regB];
       break;
-
-    // TODO: implement more ALU ops
+    case ALU_ADD:
+      cpu->reg[regA] = cpu->reg[regA] + cpu->reg[regB];
+      break;
+    case ALU_CMP:
+      // and mask to reset flag bits
+      *cpu->fl = *cpu->fl & 0b00000000;
+      if (cpu->reg[regA] == cpu->reg[regB]) {
+        // or maks to set selected bit on
+        *cpu->fl = *cpu->fl | 0b00000001;
+      } else if (cpu->reg[regA] > cpu->reg[regB]) {
+        *cpu->fl = *cpu->fl | 0b00000100;
+      } else {
+        *cpu->fl = *cpu->fl | 0b00000010;
+      }
+      break;
+    case ALU_AND:
+      cpu->reg[regA] = cpu->reg[regA] & cpu->reg[regB];
+      break;
+    case ALU_OR:
+      cpu->reg[regA] = cpu->reg[regA] | cpu->reg[regB];
+      break;
+    case ALU_XOR:
+      cpu->reg[regA] = cpu->reg[regA] ^ cpu->reg[regB];
+      break;
+    case ALU_NOT:
+      cpu->reg[regA] = ~cpu->reg[regA];
+      break;
+    case ALU_SHL:
+      cpu->reg[regA] = cpu->reg[regA] << cpu->reg[regB];
+      break;
+    case ALU_SHR:
+      cpu->reg[regA] = cpu->reg[regA] >> cpu->reg[regB];
+      break;
+    case ALU_MOD:
+      cpu->reg[regA] = cpu->reg[regA] % cpu->reg[regB];
+      break;
   }
 }
 
@@ -64,7 +99,6 @@ int cpu_ram_read(struct cpu *cpu, int index) {
 }
 
 int cpu_ram_write(struct cpu *cpu, int index, char *input) {
-  // how do we know which block of ram to write to?
   cpu->ram[index] = input;
   return 0;
 }
@@ -78,18 +112,14 @@ branch_tbl[LDI] = handle_LDI;
 */
 void handle_LDI(struct cpu *cpu, int op_a, int op_b)
 {
-    /* printf("LDI\n"); */
-    /* printf("register is %d\n", op_a); */
-    /* printf("value is %d\n", op_b); */
     cpu->reg[op_a] = op_b;
-    /* printf("confirming: %d\n", cpu->reg[op_a]); */
 }
 
 void handle_MUL(struct cpu *cpu, int op_a, int op_b)
 {
-    /* printf("MUL\n"); */
     cpu->reg[op_a] = cpu->reg[op_a] * cpu->reg[op_b];
 }
+
 /**
  * Run the CPU
  */
@@ -103,73 +133,97 @@ void cpu_run(struct cpu *cpu)
     ir = cpu_ram_read(cpu, 0);
     // 2. Figure out how many operands this next instruction requires
     ops_count = (ir >> 6) & 0b11; // check the first two bits for ops count
-    /* printf("ic is %d\n", ic); */
     // 3. Get the appropriate value(s) of the operands following this instruction
     if (ops_count == 2) {
-      /* instructions = 2; */
       op_a = cpu_ram_read(cpu, 1);
       op_b = cpu_ram_read(cpu, 2);
     } else if (ops_count == 1) {
-      /* instructions = 1; */
       op_a = cpu_ram_read(cpu, 1);
     }
     // 4. switch() over it to decide on a course of action.
     // 5. Do whatever the instruction should do according to the spec.
     jmp_flag = 0;
-    /* printf("address %d\n", cpu->pc); */
     switch(ir) {
       case CALL:
         jmp_flag = 1;
-        /* printf("CALL\n"); */
         cpu->sp--;
         *cpu->sp = cpu->pc + 2;
-        /* printf("sp is now set to %d\n", *cpu->sp); */
         cpu->pc = cpu->reg[op_a];
-        /* printf("pc is now set to %d\n", cpu->pc); */
         break;
       case RET:
-        /* printf("RET\n"); */
         jmp_flag = 1;
         cpu->pc = *cpu->sp;
-        /* cpu->pc++; */
-        continue;
+        break;
       case HLT:
-        /* printf("HLT\n"); */
         running = 0;
         break;
       case LDI:
-        /* printf("LDI\n"); */
         handle_LDI(cpu, op_a, op_b);
         break;
-      case MUL: // come back and call alu function later
-        handle_MUL(cpu, op_a, op_b);
+      case MUL:
+        alu(cpu, ALU_MUL, op_a, op_b);
         break;
       case ADD:
-        /* printf("ADD\n"); */
-        cpu->reg[op_a] = cpu->reg[op_a] + cpu->reg[op_b];
+        alu(cpu, ALU_ADD, op_a, op_b);
+        break;
+      case ADDI:
+        cpu->reg[op_a] += op_b;
+        break;
+      case CMP:
+        alu(cpu, ALU_CMP, op_a, op_b);
+        break;
+      case JMP:
+        jmp_flag = 1;
+        cpu->pc = cpu->reg[op_a];
+        break;
+      case JEQ:
+        if (*cpu->fl & 0b00000001) {
+          jmp_flag = 1;
+          cpu->pc = cpu->reg[op_a];
+        }
+        break;
+      case JNE:
+        if (!(*cpu->fl & 0b00000001)) {
+          jmp_flag = 1;
+          cpu->pc = cpu->reg[op_a];
+        }
+        break;
+      case AND:
+        alu(cpu, ALU_AND, op_a, op_b);
+        break;
+      case OR:
+        alu(cpu, ALU_OR, op_a, op_b);
+        break;
+      case XOR:
+        alu(cpu, ALU_XOR, op_a, op_b);
+        break;
+      case NOT:
+        alu(cpu, ALU_NOT, op_a, op_b);
+        break;
+      case SHL:
+        alu(cpu, ALU_SHL, op_a, op_b);
+        break;
+      case SHR:
+        alu(cpu, ALU_SHR, op_a, op_b);
         break;
       case PRN:
-        /* printf("PRN\n"); */
         printf("%d\n", cpu->reg[op_a]);
         break;
       case PUSH:
-        /* printf("PUSH\n"); */
         cpu->sp--;
         *cpu->sp = cpu->reg[op_a];
         break;
       case POP:
-        /* printf("POP\n"); */
         cpu->reg[op_a] = *cpu->sp;
         cpu->sp++;
         break;
       default:
-        /* printf("default instance\n"); */
+        printf("default instance\n");
         shutdown(cpu, 1);
     }
     // 6. Move the PC to the next instruction.
     if (!jmp_flag) {
       cpu->pc += 1 + ops_count;
-      /* printf("no jump, pc is now %d\n", cpu->pc); */
     }
   }
 }
@@ -181,9 +235,9 @@ void cpu_init(struct cpu *cpu)
 {
   cpu->pc = 0;
   cpu->reg = calloc(sizeof(cpu->reg), 8);
-  // cpu->reg[7] = 0xf4; // this seems wrong...
   cpu->ram = calloc(sizeof(cpu->ram), 256);
   cpu->sp = &cpu->ram[0xf4];
+  cpu->fl = calloc(1, sizeof(char));
   /* i know the above is wrong, and the pointer should be in reg[7], but
      is there anyway to get around that? cpu->mem[cpu->reg[SP]] just feels so messy.
      */
